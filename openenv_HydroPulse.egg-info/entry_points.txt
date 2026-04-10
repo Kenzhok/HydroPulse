@@ -1,0 +1,2 @@
+[console_scripts]
+server = HydroPulse.server.app:main

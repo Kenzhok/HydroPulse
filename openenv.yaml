@@ -1,0 +1,17 @@
+spec_version: 1
+name: HydroPulse
+description: "G-Cans style flood prevention and hydroelectric management system."
+type: space
+runtime: fastapi
+app: server.app:app
+port: 8000
+tasks:
+  - name: baseline_generation
+    difficulty: easy
+    grader: server.tasks:easy_grader
+  - name: peak_shaving
+    difficulty: medium
+    grader: server.tasks:medium_grader
+  - name: storm_surge
+    difficulty: hard
+    grader: server.tasks:hard_grader
