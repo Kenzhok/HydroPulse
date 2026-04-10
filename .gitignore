@@ -1,23 +1,50 @@
-# Python
+# ── Python ────────────────────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+*.so
+
+# ── Build & Distribution ──────────────────────────────────────────────────────
 *.egg-info/
 *.egg
+dist/
+build/
+wheels/
 
-# Virtual environments
+# ── Virtual Environments ──────────────────────────────────────────────────────
 .venv/
 venv/
 env/
+ENV/
 
-# IDE
+# ── uv ────────────────────────────────────────────────────────────────────────
+# Keep uv.lock committed (reproducible installs)
+# Ignore uv cache
+.uv/
+
+# ── IDE & Editor ──────────────────────────────────────────────────────────────
 .vscode/
 .idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
 
-# Build artifacts
-dist/
-build/
-
-# Environment variables
+# ── Environment Variables ─────────────────────────────────────────────────────
 .env
+.env.*
+!.env.example
+
+# ── OpenEnv / HuggingFace ─────────────────────────────────────────────────────
+outputs/
+.openenv_cache/
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Testing ───────────────────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
