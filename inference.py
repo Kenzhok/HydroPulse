@@ -100,7 +100,7 @@ def build_prompt(obs) -> str:
         "Rules:\n"
         "- turbine_release (0.0-1.0): generates revenue = turbine_release * grid_demand_price / 5.0\n"
         "- spillway_release (0.0-1.0): dumps water, no revenue\n"
-        "- total_release = (turbine * 10) + (spillway * 50)\n"
+        "- total_release = (turbine * 10) + (spillway * 30)\n"
         "- If total_release > downstream_capacity OR reservoir > 100 => reward = 0.0\n"
         "- Staying in 40-60 range gives +0.1 bonus\n\n"
         'Respond ONLY as JSON: {"turbine_release": <float 0.0-1.0>, "spillway_release": <float 0.0-1.0>}'
