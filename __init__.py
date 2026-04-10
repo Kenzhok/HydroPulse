@@ -6,8 +6,13 @@
 
 """Hydropulse Environment."""
 
-from .client import HydropulseEnv
-from .models import HydropulseAction, HydropulseObservation
+try:
+    from .client import HydropulseEnv
+    from .models import HydropulseAction, HydropulseObservation
+except ImportError:
+    from client import HydropulseEnv
+    from models import HydropulseAction, HydropulseObservation
+
 
 __all__ = [
     "HydropulseAction",

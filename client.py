@@ -12,7 +12,11 @@ from openenv.core import EnvClient
 from openenv.core.client_types import StepResult
 from openenv.core.env_server.types import State
 
-from .models import HydropulseAction, HydropulseObservation
+try:
+    from .models import HydropulseAction, HydropulseObservation
+except ImportError:
+    from models import HydropulseAction, HydropulseObservation
+
 
 
 class HydropulseEnv(
