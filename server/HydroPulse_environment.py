@@ -5,10 +5,11 @@
 # LICENSE file in the root directory of this source tree.
 
 """
-Hydropulse Environment Implementation.
+HydroPulse-v1 Environment Implementation.
 
-A simple test environment that echoes back messages sent to it.
-Perfect for testing HTTP server infrastructure.
+A continuous-state hydroelectric dam management environment.
+The agent controls turbine and spillway releases to maximise revenue
+while preventing reservoir overflow and downstream flooding.
 """
 
 from uuid import uuid4
@@ -24,28 +25,29 @@ except ImportError:
 
 class HydropulseEnvironment(Environment):
     """
-    A simple echo environment that echoes back messages.
+    HydroPulse-v1: Continuous-state hydroelectric dam management.
 
-    This environment is designed for testing the HTTP server infrastructure.
-    It maintains minimal state and simply echoes back whatever message it receives.
+    Physics:
+        new_level = current_level + inflow_rate
+                  - (turbine_release * MAX_TURBINE_CAPACITY)
+                  - (spillway_release * MAX_SPILLWAY_CAPACITY)
 
-    Example:
-        >>> env = HydropulseEnvironment()
-        >>> obs = env.reset()
-        >>> print(obs.echoed_message)  # "Hydropulse environment ready!"
-        >>>
-        >>> obs = env.step(HydropulseAction(message="Hello"))
-        >>> print(obs.echoed_message)  # "Hello"
-        >>> print(obs.message_length)  # 5
+    Constraints:
+        - reservoir_level must stay in [0.0, MAX_CAPACITY]
+        - total_release must not exceed DOWNSTREAM_CAPACITY
+
+    Reward: Revenue normalised to [0.0, 1.0], 0.0 on any breach.
     """
 
     # Enable concurrent WebSocket sessions.
     SUPPORTS_CONCURRENT_SESSIONS: bool = True
 
-    MAX_CAPACITY = 100.0
+    MAX_CAPACITY         = 100.0
     MAX_TURBINE_CAPACITY = 10.0
-    MAX_SPILLWAY_CAPACITY = 50.0
-    DOWNSTREAM_CAPACITY = 40.0
+    # MAX_TURBINE + MAX_SPILLWAY == DOWNSTREAM_CAPACITY so the agent can
+    # always exactly break even during the worst surge without flooding.
+    MAX_SPILLWAY_CAPACITY = 30.0
+    DOWNSTREAM_CAPACITY   = 40.0
 
     def __init__(self):
         """Initialize the HydroPulse environment."""
@@ -72,13 +74,17 @@ class HydropulseEnvironment(Environment):
         self.reservoir_level = 50.0
         
         if self.task_type == "easy":
+            # Steady inflow — turbine=0.5 gives net=0 (level stable at 50)
             self.inflow_rate = 5.0
             self.grid_demand_price = 1.0
         elif self.task_type == "medium":
-            self.inflow_rate = 3.0
+            # Low base inflow; price spikes at step 10
+            # turbine=0.5 gives net=0 (5 in, 5 out) — level stays stable
+            self.inflow_rate = 5.0
             self.grid_demand_price = 1.0
         elif self.task_type == "hard":
-            self.inflow_rate = 15.0 # Massive inflow
+            # Moderate pre-surge inflow; agent must prepare before step 5
+            self.inflow_rate = 5.0
             self.grid_demand_price = 1.0
 
         return HydropulseObservation(
@@ -112,7 +118,9 @@ class HydropulseEnvironment(Environment):
             self.grid_demand_price = max(1.0, self.grid_demand_price - 0.5)
 
         if self.task_type == "hard" and step == 5:
-            self.inflow_rate = 40.0  # Storm surge
+            # Storm surge: inflow = 30.0. Max release also = 40.0 > 30.0
+            # so the agent CAN survive if spillway is open.
+            self.inflow_rate = 30.0
         elif self.task_type == "hard" and step > 15:
             self.inflow_rate = 5.0
 
@@ -124,16 +132,21 @@ class HydropulseEnvironment(Environment):
         total_release = turbine_flow + spillway_flow
 
         # Physics: new_level = current_level + inflow - release
-        self.reservoir_level = self.reservoir_level + self.inflow_rate - total_release
+        raw_level = self.reservoir_level + self.inflow_rate - total_release
 
         # Reward shaping — all values clamped strictly to [0.0, 1.0]
         breach = False
 
-        # Hard penalties: flag a breach but don't let reward go negative
-        if self.reservoir_level > self.MAX_CAPACITY:
-            breach = True
+        # Breach conditions
+        if raw_level > self.MAX_CAPACITY:
+            breach = True   # Overflow — dam breaches
+        if raw_level < 0.0:
+            breach = True   # Reservoir emptied — physically impossible
         if total_release > self.DOWNSTREAM_CAPACITY:
-            breach = True
+            breach = True   # Downstream flood
+
+        # Clamp level to physical bounds (even on breach, for next step safety)
+        self.reservoir_level = max(0.0, min(self.MAX_CAPACITY, raw_level))
 
         if breach:
             # Any breach zeroes out the reward for this step
