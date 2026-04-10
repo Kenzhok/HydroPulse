@@ -38,9 +38,9 @@ except Exception as e:  # pragma: no cover
 try:
     from ..models import HydropulseAction, HydropulseObservation
     from .HydroPulse_environment import HydropulseEnvironment
-except ModuleNotFoundError:
-    from models import HydropulseAction, HydropulseObservation
-    from server.HydroPulse_environment import HydropulseEnvironment
+except ImportError:
+    from HydroPulse.models import HydropulseAction, HydropulseObservation
+    from HydroPulse.server.HydroPulse_environment import HydropulseEnvironment
 
 
 # Create the app with web interface and README integration

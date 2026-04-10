@@ -19,7 +19,7 @@ from openenv.core.env_server.types import State
 try:
     from ..models import HydropulseAction, HydropulseObservation
 except ImportError:
-    from models import HydropulseAction, HydropulseObservation
+    from HydroPulse.models import HydropulseAction, HydropulseObservation
 
 
 class HydropulseEnvironment(Environment):
