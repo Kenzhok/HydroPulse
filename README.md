@@ -18,7 +18,7 @@ tags:
 
 > **Meta × Scaler OpenEnv AI Hackathon Submission**
 
-HydroPulse is an OpenEnv-compatible reinforcement learning environment where an AI agent operates a hydroelectric dam. The agent must balance **revenue generation** through turbine releases against **flood prevention** via spillway management — all within a continuous physics simulation inspired by Japan's G-Cans underground flood-defence system.
+HydroPulse is an OpenEnv-compatible benchmark for safety-constrained decision-making in physical infrastructure, providing a compact, reusable testbed for continuous control, temporal planning, and safety-critical resource allocation under uncertainty. It fills a crucial gap in OpenEnv's ecosystem—which is dominated by language-heavy workflow environments—by driving agents against a stochastic, non-linear physical fluid mechanics engine. Inspired by Japan's G-Cans flood-defense system, the AI evaluates risk tradeoffs by acting as an automated downstream operator, balancing proactive disaster prevention against peak-revenue energy generation.
 
 ---
 
@@ -40,6 +40,11 @@ new_level = current_level + inflow_rate
           - (spillway_release * 30.0 * head_pressure)
           - evap_loss
 ```
+
+## 🎯 Who Is This For?
+* **RL researchers** who need a physically grounded, reusable benchmark with meaningful failure states
+* **Agent evaluation teams** testing whether frontier LLMs can reason about continuous quantitative control under delayed consequences
+* **Post-training researchers** looking for environments that require multi-step physical planning rather than single-turn text generation
 
 ---
 
@@ -75,7 +80,7 @@ All step rewards are strictly normalised to **[0.0, 1.0]**:
 | Downstream flood (`total_release > 40.0`) | **0.0** — flood constraint violated |
 | Clean operation | `(actual_turbine_flow × price) / 800.0` |
 
-> Max possible revenue = `MAX_TURBINE_FLOW × MAX_PRICE` (`10.0 × 80.0 = 800.0`). The reward strictly normalizes revenue against this theoretical maximum.
+> Max possible revenue = `MAX_TURBINE_FLOW × MAX_PRICE` (`10.0 × 80.0 = 800.0`). The reward strictly normalizes revenue against this theoretical maximum. Because reward scales with both turbine flow and current price, the environment creates a genuine tension between holding water for future price peaks (medium) and releasing water before a flood (hard) — these objectives are mutually exclusive at the same timestep.
 
 ---
 
@@ -113,6 +118,16 @@ At **step 5**, inflow surges from `5.0 → 35.0` for 10 steps (steps 5–14) (si
 **Constraints:** `total_release ≤ 40.0` per step (spillway alone can handle surge if turbine is also running).
 
 **Optimal pre-surge strategy:** Run turbine fully to drop level below 20 before step 5, then open spillway during surge.
+
+---
+
+## 🧠 Why Is This Hard?
+
+Torricelli head pressure makes the environment non-linear — releasing water from a 90% full dam is not 3× more effective than from a 30% full dam; it is only ~√3 ≈ 1.73× more effective. Agents that assume linearity will systematically over-release from low levels and under-release from high levels.
+
+The Hard tier forces proactive planning because at 50% reservoir level the maximum reactive release (~28 units/step) is lower than the surge inflow (35 units/step), making overflow mathematically certain unless the agent pre-drains below ~20% before step 5.
+
+Gaussian price noise (σ=5) and stochastic inflow (±1.5) mean the optimal action at any step cannot be computed from a lookup table — the agent must integrate uncertain signals across a 20-step horizon where a single overflow terminates the episode with zero reward.
 
 ---
 
