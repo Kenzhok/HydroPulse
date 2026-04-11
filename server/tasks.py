@@ -1,6 +1,6 @@
 from typing import List, Dict, Any
 
-def easy_grader(episode_log: List[Dict[str, Any]]) -> float:
+def easy_grader(episode_log: List[Dict[str, Any]], **kwargs) -> float:
     """
     Grader for Baseline Generation (Easy).
     Evaluates what percentage of steps the reservoir level remained in the safe zone (40%-60%).
@@ -27,7 +27,7 @@ def easy_grader(episode_log: List[Dict[str, Any]]) -> float:
         
     return safe_steps / total_steps
 
-def medium_grader(episode_log: List[Dict[str, Any]]) -> float:
+def medium_grader(episode_log: List[Dict[str, Any]], **kwargs) -> float:
     """
     Grader for Peak Shaving (Medium).
     Evaluates revenue generated as a fraction of maximum theoretically possible revenue.
@@ -60,7 +60,7 @@ def medium_grader(episode_log: List[Dict[str, Any]]) -> float:
         
     return min(1.0, max(0.0, total_revenue / max_theoretical_revenue))
 
-def hard_grader(episode_log: List[Dict[str, Any]]) -> float:
+def hard_grader(episode_log: List[Dict[str, Any]], **kwargs) -> float:
     """
     Grader for Storm Surge (Hard).
     Returns 1.0 if no fatal constraint was breached across the episode, 0.0 otherwise.

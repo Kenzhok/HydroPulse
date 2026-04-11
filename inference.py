@@ -88,7 +88,7 @@ def get_llm_client() -> OpenAI:
 
 
 # ── Prompt builder ─────────────────────────────────────────────────────────────
-def build_prompt(obs) -> str:
+def build_prompt(obs, **kwargs) -> str:
     return (
         f"Step: {obs.step_number}/20\n"
         f"Reservoir Level: {obs.reservoir_level:.2f} / 100.0\n"
@@ -101,7 +101,7 @@ def build_prompt(obs) -> str:
 
 
 # ── LLM call with heuristic fallback ──────────────────────────────────────────
-def call_llm(client: OpenAI, obs) -> HydropulseAction:
+def call_llm(client: OpenAI, obs, **kwargs) -> HydropulseAction:
     if not HF_TOKEN:
         return _heuristic_action(obs)
         

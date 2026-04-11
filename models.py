@@ -16,12 +16,14 @@ from pydantic import Field
 
 class HydropulseAction(Action):
     """Action for the Hydropulse environment - turbine and spillway release control."""
+    model_config = {"extra": "allow"}
     turbine_release: float = Field(..., ge=0.0, le=1.0, description="Turbine release factor (0.0 to 1.0)")
     spillway_release: float = Field(..., ge=0.0, le=1.0, description="Spillway release factor (0.0 to 1.0)")
 
 
 class HydropulseObservation(Observation):
     """Observation from the Hydropulse environment - water levels and grid demand."""
+    model_config = {"extra": "allow"}
     reservoir_level: float = Field(default=0.0, description="Current water level in reservoir")
     inflow_rate: float = Field(default=0.0, description="Rate of water entering the reservoir")
     grid_demand_price: float = Field(default=0.0, description="Current price multiplier for generated power")

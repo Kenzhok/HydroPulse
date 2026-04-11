@@ -63,8 +63,11 @@ class HydropulseEnvironment(Environment):
     MAX_TURBINE_FLOW  = 10.0
     MAX_GRID_PRICE    = 80.0       # sine wave peaks at 50 + 30 = 80
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         """Initialise the HydroPulse environment."""
+        self.MAX_CAPACITY = kwargs.get("max_capacity", self.MAX_CAPACITY)
+        self.DOWNSTREAM_CAPACITY = kwargs.get("downstream_capacity", self.DOWNSTREAM_CAPACITY)
+        
         self._state = State(episode_id=str(uuid4()), step_count=0)
         self._reset_count = 0
         self.reservoir_level   = 50.0
@@ -73,7 +76,7 @@ class HydropulseEnvironment(Environment):
         self.task_type         = "easy"
         self._rng              = random.Random()  # per-episode RNG (seeded on reset)
 
-    def reset(self) -> HydropulseObservation:
+    def reset(self, **kwargs) -> HydropulseObservation:
         """
         Reset the environment and randomise the task scenario.
 
@@ -84,9 +87,11 @@ class HydropulseEnvironment(Environment):
         self._state = State(episode_id=episode_id, step_count=0)
         self._reset_count += 1
 
-        # Seed per-episode RNG from episode_id for reproducibility
-        self._rng.seed(episode_id)
-        self.task_type = self._rng.choice(["easy", "medium", "hard"])
+        # Seed per-episode RNG from episode_id for reproducibility (or dynamic kwarg)
+        seed = kwargs.get('seed', episode_id)
+        self._rng.seed(seed)
+        
+        self.task_type = kwargs.get('task_type', self._rng.choice(["easy", "medium", "hard"]))
 
         self.reservoir_level = 50.0
 
@@ -128,7 +133,7 @@ class HydropulseEnvironment(Environment):
 
     # ── Core step ─────────────────────────────────────────────────────────────
 
-    def step(self, action: HydropulseAction) -> HydropulseObservation:  # type: ignore[override]
+    def step(self, action: HydropulseAction, **kwargs) -> HydropulseObservation:  # type: ignore[override]
         """
         Execute one step using Torricelli hydraulic-head dynamics.
 
