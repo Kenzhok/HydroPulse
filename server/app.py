@@ -49,7 +49,7 @@ app = create_app(
     HydropulseAction,
     HydropulseObservation,
     env_name="HydroPulse",
-    max_concurrent_envs=1,  # increase this number to allow more concurrent WebSocket sessions
+    max_concurrent_envs=4,  # increase this number to allow more concurrent WebSocket sessions
 )
 
 

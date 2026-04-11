@@ -206,13 +206,13 @@ class HydropulseEnvironment(Environment):
         self.reservoir_level = max(0.0, min(self.MAX_CAPACITY, raw_level))
 
         # ── 7. Reward — strictly [0.0, 1.0] ──────────────────────────────────
+        revenue = actual_turbine_flow * current_price
+
         if breach:
             reward = 0.0
             done   = True   # Episode ends immediately on breach
         else:
-            # Revenue = power generated × current price
             # Normalised against theoretical max: MAX_TURBINE_FLOW * MAX_GRID_PRICE
-            revenue = actual_turbine_flow * current_price
             reward  = min(1.0, max(0.0, revenue / (self.MAX_TURBINE_FLOW * self.MAX_GRID_PRICE)))
             done    = step >= 20  # Normal episode end
 
@@ -234,6 +234,7 @@ class HydropulseEnvironment(Environment):
                 "evap_loss":           round(evap_loss, 4),
                 "total_release":       round(total_release, 4),
                 "breach":              breach,
+                "revenue":             round(revenue if not breach else 0.0, 4),
             },
         )
 
