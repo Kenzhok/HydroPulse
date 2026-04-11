@@ -31,11 +31,14 @@ At each step the agent chooses how much water to release through two valves:
 | **Turbine** | `turbine_release` (0.0–1.0) | Generates electricity revenue, max 10 units/step |
 | **Spillway** | `spillway_release` (0.0–1.0) | Dumps excess water, max 30 units/step |
 
-**Core physics equation (applied every step):**
-```
+**Core physics (Torricelli hydraulic head & evaporation):**
+```python
+head_pressure = math.sqrt(max(0, current_level) / 100.0)
+evap_loss = 0.05 * (current_level ** 0.66)
 new_level = current_level + inflow_rate
-          - (turbine_release × 10.0)
-          - (spillway_release × 30.0)
+          - (turbine_release * 10.0 * head_pressure)
+          - (spillway_release * 30.0 * head_pressure)
+          - evap_loss
 ```
 
 ---
@@ -53,8 +56,8 @@ class HydropulseAction(Action):
 ```python
 class HydropulseObservation(Observation):
     reservoir_level:     float  # Current water level (clamped to 0–100)
-    inflow_rate:         float  # Water entering the reservoir per step
-    grid_demand_price:   float  # Revenue multiplier (spikes on Medium task)
+    inflow_rate:         float  # Stochastic water entering reservoir per step
+    grid_demand_price:   float  # Revenue multiplier (diurnal sine wave + noise)
     downstream_capacity: float  # Max safe total outflow = 40.0
     value:               float  # Reward earned this step
 ```
@@ -70,10 +73,9 @@ All step rewards are strictly normalised to **[0.0, 1.0]**:
 | Reservoir overflows (`level > 100`) | **0.0** — dam breach |
 | Reservoir depleted (`level < 0`) | **0.0** — physically impossible |
 | Downstream flood (`total_release > 40.0`) | **0.0** — flood constraint violated |
-| Clean operation | `(turbine_release × price) / 5.0` |
-| Level inside safe buffer zone (40–60) | `+0.1` bonus added |
+| Clean operation | `(actual_turbine_flow × price) / 800.0` |
 
-> Max achievable reward per step = **1.0** (full turbine at peak price + buffer bonus)
+> Max possible revenue = `MAX_TURBINE_FLOW × MAX_PRICE` (`10.0 × 80.0 = 800.0`). The reward strictly normalizes revenue against this theoretical maximum.
 
 ---
 
@@ -91,18 +93,18 @@ Steady inflow of **5 units/step**. No surprises.
 ---
 
 ### 🟡 Medium — Peak Shaving
-Steady inflow of 5 units/step. At **step 10**, `grid_demand_price` spikes from `1.0 → 5.0` then decays back.
+Steady inflow of 5 units/step. `grid_demand_price` follows a **diurnal sine wave** combined with stochastic Gaussian noise, simulating realistic energy markets.
 
-**Challenge:** Maximise revenue by timing turbine output to the price spike without draining the reservoir.
+**Challenge:** Maximise diurnal revenue by timing turbine output to evening peaks while managing changing hydraulic head pressures.
 
 **Grader:** `total revenue earned / maximum theoretically possible revenue`
 
-**Optimal strategy:** Conserve water pre-spike, open turbine fully at step 10, scale back as price decays.
+**Optimal strategy:** Ramp up turbine release as prices rise.
 
 ---
 
 ### 🔴 Hard — Storm Surge
-At **step 5**, inflow surges from `5.0 → 30.0` for 10 steps (simulating a monsoon), then returns to `5.0`.
+At **step 5**, inflow surges from `5.0 → 20.0` for 10 steps (simulating a monsoon), then returns to `5.0`.
 
 **Challenge:** Pre-emptively lower the reservoir before the surge to create headroom, then manage spillway to stay within downstream limits.
 

@@ -98,11 +98,13 @@ def build_prompt(obs) -> str:
         f"- grid_demand_price: {obs.grid_demand_price:.2f} (higher = more revenue)\n"
         f"- downstream_capacity: {obs.downstream_capacity:.2f} (max safe total release)\n\n"
         "Rules:\n"
-        "- turbine_release (0.0-1.0): generates revenue = turbine_release * grid_demand_price / 5.0\n"
-        "- spillway_release (0.0-1.0): dumps water, no revenue\n"
-        "- total_release = (turbine * 10) + (spillway * 30)\n"
-        "- If total_release > downstream_capacity OR reservoir > 100 => reward = 0.0\n"
-        "- Staying in 40-60 range gives +0.1 bonus\n\n"
+        "- head_pressure = sqrt(max(0, reservoir_level) / 100.0) (flow depends on fill level!)\n"
+        "- actual_turbine_flow = turbine_release * 10.0 * head_pressure\n"
+        "- actual_spillway_flow = spillway_release * 30.0 * head_pressure\n"
+        "- total_release = actual_turbine_flow + actual_spillway_flow\n"
+        "- evap_loss = 0.05 * (reservoir_level ** 0.66)\n"
+        "- reward is proportional to: actual_turbine_flow * grid_demand_price\n"
+        "- DANGERS: total_release > downstream_capacity OR reservoir > 100 OR reservoir < 0 => INSTANT BREACH (Reward = 0.0 & Episode Ends)\n\n"
         'Respond ONLY as JSON: {"turbine_release": <float 0.0-1.0>, "spillway_release": <float 0.0-1.0>}'
     )
 

@@ -51,3 +51,8 @@ logs/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# ── Scratch / Local test scripts ─────────────────────────────────────────────
+test_physics.py
+test_*.py
+scratch_*.py
