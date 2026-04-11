@@ -165,7 +165,9 @@ class HydropulseEnvironment(Environment):
         # ── 2. Clamp actions ──────────────────────────────────────────────────
         # Stochastic inflow perturbation: ±1.5 units (uniform) — simulates
         # measurement uncertainty and sub-step rainfall variability.
-        inflow_noise      = self._rng.uniform(-1.5, 1.5)
+        # Suppress noise during Hard surge window for deterministic challenge
+        is_surge = self.task_type == "hard" and 5 <= step <= 14
+        inflow_noise      = 0.0 if is_surge else self._rng.uniform(-1.5, 1.5)
         current_inflow    = max(0.5, self.inflow_rate + inflow_noise)  # min 0.5
         self.inflow_rate  = current_inflow  # expose noisy value in observation
 
