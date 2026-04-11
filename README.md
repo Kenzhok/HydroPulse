@@ -104,15 +104,15 @@ Steady inflow of 5 units/step. `grid_demand_price` follows a **diurnal sine wave
 ---
 
 ### 🔴 Hard — Storm Surge
-At **step 5**, inflow surges from `5.0 → 20.0` for 10 steps (simulating a monsoon), then returns to `5.0`.
+At **step 5**, inflow surges from `5.0 → 35.0` for 10 steps (steps 5–14) (simulating a monsoon), then returns to `5.0`.
 
-**Challenge:** Pre-emptively lower the reservoir before the surge to create headroom, then manage spillway to stay within downstream limits.
+**Challenge:** With surge inflow of 35 units/step exceeding the maximum reactive release capacity (~28 units at 50% level), the agent must proactively drain the reservoir below 20% before step 5 to survive the storm surge.
 
 **Grader:** `1.0` if **zero** breaches throughout the episode, `0.0` if any constraint is ever violated.
 
 **Constraints:** `total_release ≤ 40.0` per step (spillway alone can handle surge if turbine is also running).
 
-**Optimal pre-surge strategy:** Run turbine lightly to drop level below 50 before step 5, then open spillway during surge.
+**Optimal pre-surge strategy:** Run turbine fully to drop level below 20 before step 5, then open spillway during surge.
 
 ---
 

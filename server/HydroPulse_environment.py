@@ -111,6 +111,7 @@ class HydropulseEnvironment(Environment):
             value=0.0,
             done=False,
             reward=0.0,
+            step_number=0,
             metadata={"task": self.task_type, "step": 0},
         )
 
@@ -147,10 +148,10 @@ class HydropulseEnvironment(Environment):
 
         # ── 1. Scenario dynamics ───────────────────────────────────────────────
         if self.task_type == "hard" and step == 5:
-            # Storm surge: inflow jumps to 20. Max release (40) > surge (20),
-            # so the agent CAN survive with spillway open. ~15% breach rate expected.
-            self.inflow_rate = 20.0
-        elif self.task_type == "hard" and step > 15:
+            # Storm surge: inflow jumps to 35. Max release (~28) < surge (35),
+            # so the agent MUST proactively drain to survive.
+            self.inflow_rate = 35.0
+        elif self.task_type == "hard" and step > 14:
             self.inflow_rate = 5.0
 
         # Diurnal grid price + Gaussian noise (σ=5) — forces real uncertainty
@@ -197,7 +198,7 @@ class HydropulseEnvironment(Environment):
             breach = True   # Overflow — dam fails
         if raw_level < 0.0:
             breach = True   # Reservoir fully depleted
-        if total_release > self.DOWNSTREAM_CAPACITY:
+        if total_release >= self.DOWNSTREAM_CAPACITY:
             breach = True   # Downstream flood
 
         # Clamp level to physical bounds regardless of breach
@@ -222,6 +223,7 @@ class HydropulseEnvironment(Environment):
             value=reward,
             done=done,
             reward=reward,
+            step_number=step,
             metadata={
                 "task":                self.task_type,
                 "step":                step,

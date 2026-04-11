@@ -27,3 +27,4 @@ class HydropulseObservation(Observation):
     grid_demand_price: float = Field(default=0.0, description="Current price multiplier for generated power")
     downstream_capacity: float = Field(default=40.0, description="Maximum safe downstream flow")
     value: float = Field(default=0.0, description="Current step's calculated reward value")
+    step_number: int = Field(default=0, description="Current step within the episode (0–20)")
