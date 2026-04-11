@@ -109,15 +109,15 @@ Steady inflow of 5 units/step. `grid_demand_price` follows a **diurnal sine wave
 ---
 
 ### 🔴 Hard — Storm Surge
-At **step 5**, inflow surges from `5.0 → 35.0` for 10 steps (steps 5–14) (simulating a monsoon), then returns to `5.0`.
+At **step 5**, inflow surges from `5.0 → 42.0` for 10 steps (steps 5–14) (simulating a monsoon), then returns to `5.0`.
 
-**Challenge:** With surge inflow of 35 units/step exceeding the maximum reactive release capacity (~28 units at 50% level), the agent must proactively drain the reservoir below 20% before step 5 to survive the storm surge.
+**Challenge:** With surge inflow of 42 units/step exceeding the maximum reactive release capacity (~28 units at 50% level), the agent must proactively drain the reservoir below 15% before step 5 to survive the storm surge.
 
 **Grader:** `1.0` if **zero** breaches throughout the episode, `0.0` if any constraint is ever violated.
 
 **Constraints:** `total_release ≤ 40.0` per step (spillway alone can handle surge if turbine is also running).
 
-**Optimal pre-surge strategy:** Run turbine fully to drop level below 20 before step 5, then open spillway during surge.
+**Optimal pre-surge strategy:** Run turbine fully to drop level below 15 before step 5, then open spillway during surge.
 
 ---
 
@@ -125,7 +125,7 @@ At **step 5**, inflow surges from `5.0 → 35.0` for 10 steps (steps 5–14) (si
 
 Torricelli head pressure makes the environment non-linear — releasing water from a 90% full dam is not 3× more effective than from a 30% full dam; it is only ~√3 ≈ 1.73× more effective. Agents that assume linearity will systematically over-release from low levels and under-release from high levels.
 
-The Hard tier forces proactive planning because at 50% reservoir level the maximum reactive release (~28 units/step) is lower than the surge inflow (35 units/step), making overflow mathematically certain unless the agent pre-drains below ~20% before step 5.
+The Hard tier forces proactive planning because at 50% reservoir level the maximum reactive release (~28 units/step) is lower than the surge inflow (42 units/step), making overflow mathematically certain unless the agent pre-drains below ~15% before step 5.
 
 Gaussian price noise (σ=5) and stochastic inflow (±1.5) mean the optimal action at any step cannot be computed from a lookup table — the agent must integrate uncertain signals across a 20-step horizon where a single overflow terminates the episode with zero reward.
 

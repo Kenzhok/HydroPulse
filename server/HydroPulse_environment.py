@@ -148,9 +148,10 @@ class HydropulseEnvironment(Environment):
 
         # ── 1. Scenario dynamics ───────────────────────────────────────────────
         if self.task_type == "hard" and step == 5:
-            # Storm surge: inflow=45 exceeds absolute max release (40.0) at any head pressure,
-            # guaranteeing overflow unless agent pre-drains below ~20% before step 5.
-            self.inflow_rate = 45.0
+            # Storm surge: inflow=42 exceeds reactive release from 50% level (~28 units/step),
+            # forcing overflow unless agent pre-drains below ~15% before step 5.
+            # An agent that pre-drains to 15% creates just enough headroom to survive.
+            self.inflow_rate = 42.0
         elif self.task_type == "hard" and step > 14:
             self.inflow_rate = 5.0
 

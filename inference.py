@@ -115,9 +115,9 @@ def call_llm(client: OpenAI, obs) -> HydropulseAction:
         "- reservoir_level > 100.0 → dam overflow\n"
         "- reservoir_level < 0.0 → reservoir depleted\n"
         "- total_release >= 40.0 → downstream flood\n"
-        "TASK HINT: On the Hard task, a storm surge of 45 units/step begins at step 5 and lasts 10 steps.\n"
+        "TASK HINT: On the Hard task, a storm surge of 42 units/step begins at step 5 and lasts 10 steps.\n"
         "This exceeds maximum release capacity (~28 units at 50% level). You MUST pre-drain the reservoir\n"
-        "below 20% before step 5 by setting turbine_release=1.0, spillway_release=1.0 from step 1.\n"
+        "below 15% before step 5 by setting turbine_release=1.0, spillway_release=1.0 from step 1.\n"
         "On Easy/Medium tasks, maximize turbine_release when grid_demand_price is high."
     )
 
