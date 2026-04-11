@@ -203,18 +203,19 @@ python inference.py
 
 ```
 HydroPulse/
-├── README.md                         # This file
+├── Dockerfile                        # Container image definition
+├── README.md                         # This document
 ├── openenv.yaml                      # OpenEnv manifest — tasks & metadata
-├── pyproject.toml                    # Project dependencies
-├── inference.py                      # LLM agent loop (judge-compatible logs)
-├── client.py                         # HydropulseEnv WebSocket client
-├── models.py                         # Action & Observation Pydantic models
+├── pyproject.toml                    # Python build configuration
+├── uv.lock                           # UV dependency lockfile
+├── inference.py                      # LLM agent evaluation script
+├── client.py                         # Environment WebSocket client payload
+├── models.py                         # Pydantic schemas for observation/actions
 └── server/
-    ├── app.py                        # FastAPI server (HTTP + WebSocket)
-    ├── HydroPulse_environment.py     # Core physics engine & reward shaping
-    ├── tasks.py                      # Easy / Medium / Hard grader functions
-    ├── requirements.txt              # Server dependencies
-    └── Dockerfile                    # Container image definition
+    ├── app.py                        # FastAPI server (HTTP/WS endpoints)
+    ├── HydroPulse_environment.py     # Core physics engine & step physics
+    ├── tasks.py                      # Difficulty grader math functions
+    └── requirements.txt              # Server runtime dependencies
 ```
 
 ---
