@@ -46,7 +46,7 @@ class HydropulseEnvironment(Environment):
     Constraints (all cause reward = 0.0 and episode termination):
       - reservoir_level > MAX_CAPACITY  → dam overflow
       - reservoir_level < 0.0           → reservoir depleted (physically impossible)
-      - total_release   > DOWNSTREAM_CAPACITY → downstream flood
+      - total_release   >= DOWNSTREAM_CAPACITY → downstream flood
     """
 
     # Enable concurrent WebSocket sessions.
@@ -76,20 +76,23 @@ class HydropulseEnvironment(Environment):
         self.task_type         = "easy"
         self._rng              = random.Random()  # per-episode RNG (seeded on reset)
 
-    def reset(self, **kwargs) -> HydropulseObservation:
+    def reset(self, seed: int | None = None, episode_id: str | None = None, **kwargs) -> HydropulseObservation:
         """
         Reset the environment and randomise the task scenario.
 
         Returns:
             HydropulseObservation with initial state (step 0).
         """
-        episode_id = str(uuid4())
+        if seed is not None:
+            self._rng.seed(seed)
+        elif episode_id is not None:
+            self._rng.seed(episode_id)
+
+        if episode_id is None:
+            episode_id = str(uuid4())
+            
         self._state = State(episode_id=episode_id, step_count=0)
         self._reset_count += 1
-
-        # Seed per-episode RNG from episode_id for reproducibility (or dynamic kwarg)
-        seed = kwargs.get('seed', episode_id)
-        self._rng.seed(seed)
         
         self.task_type = kwargs.get('task_type', self._rng.choice(["easy", "medium", "hard"]))
 
@@ -133,7 +136,7 @@ class HydropulseEnvironment(Environment):
 
     # ── Core step ─────────────────────────────────────────────────────────────
 
-    def step(self, action: HydropulseAction, **kwargs) -> HydropulseObservation:  # type: ignore[override]
+    def step(self, action: HydropulseAction, timeout_s: float | None = None, **kwargs) -> HydropulseObservation:  # type: ignore[override]
         """
         Execute one step using Torricelli hydraulic-head dynamics.
 
