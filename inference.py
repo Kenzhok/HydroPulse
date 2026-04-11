@@ -90,21 +90,12 @@ def get_llm_client() -> OpenAI:
 # ── Prompt builder ─────────────────────────────────────────────────────────────
 def build_prompt(obs) -> str:
     return (
-        "You are a Hydro-Plant Management AI controlling a dam with two release valves.\n"
-        "Your goal is to MAXIMISE revenue while PREVENTING reservoir overflow and downstream flooding.\n\n"
-        f"Current State:\n"
-        f"- reservoir_level: {obs.reservoir_level:.2f} (safe zone: 40-60, max capacity: 100)\n"
-        f"- inflow_rate: {obs.inflow_rate:.2f}\n"
-        f"- grid_demand_price: {obs.grid_demand_price:.2f} (higher = more revenue)\n"
-        f"- downstream_capacity: {obs.downstream_capacity:.2f} (max safe total release)\n\n"
-        "Rules:\n"
-        "- head_pressure = sqrt(max(0, reservoir_level) / 100.0) (flow depends on fill level!)\n"
-        "- actual_turbine_flow = turbine_release * 10.0 * head_pressure\n"
-        "- actual_spillway_flow = spillway_release * 30.0 * head_pressure\n"
-        "- total_release = actual_turbine_flow + actual_spillway_flow\n"
-        "- evap_loss = 0.05 * (reservoir_level ** 0.66)\n"
-        "- reward is proportional to: actual_turbine_flow * grid_demand_price\n"
-        "- DANGERS: total_release > downstream_capacity OR reservoir > 100 OR reservoir < 0 => INSTANT BREACH (Reward = 0.0 & Episode Ends)\n\n"
+        f"Step: {obs.step_number}/20\n"
+        f"Reservoir Level: {obs.reservoir_level:.2f} / 100.0\n"
+        f"Inflow Rate: {obs.inflow_rate:.2f} units/step\n"
+        f"Grid Demand Price: {obs.grid_demand_price:.2f}\n"
+        f"Downstream Capacity: {obs.downstream_capacity:.2f} (DO NOT EXCEED)\n"
+        f"Last Step Reward: {obs.value:.4f}\n\n"
         'Respond ONLY as JSON: {"turbine_release": <float 0.0-1.0>, "spillway_release": <float 0.0-1.0>}'
     )
 
@@ -113,10 +104,30 @@ def build_prompt(obs) -> str:
 def call_llm(client: OpenAI, obs) -> HydropulseAction:
     if not HF_TOKEN:
         return _heuristic_action(obs)
+        
+    system_message = (
+        "You are an AI operator of a hydroelectric dam. Each step you must output two float values between 0.0 and 1.0:\n"
+        "- turbine_release: controls electricity generation (max flow 10 units/step at full reservoir)\n"
+        "- spillway_release: dumps excess water (max flow 30 units/step at full reservoir)\n"
+        "Actual flow is non-linear: flow = release_value × capacity × sqrt(reservoir_level / 100).\n"
+        "A fuller reservoir releases more water per unit of valve opening.\n"
+        "FATAL CONSTRAINTS (immediately end episode with 0.0 reward):\n"
+        "- reservoir_level > 100.0 → dam overflow\n"
+        "- reservoir_level < 0.0 → reservoir depleted\n"
+        "- total_release >= 40.0 → downstream flood\n"
+        "TASK HINT: On the Hard task, a storm surge of 45 units/step begins at step 5 and lasts 10 steps.\n"
+        "This exceeds maximum release capacity (~28 units at 50% level). You MUST pre-drain the reservoir\n"
+        "below 20% before step 5 by setting turbine_release=1.0, spillway_release=1.0 from step 1.\n"
+        "On Easy/Medium tasks, maximize turbine_release when grid_demand_price is high."
+    )
+
     try:
         response = client.chat.completions.create(
             model=MODEL_NAME,
-            messages=[{"role": "user", "content": build_prompt(obs)}],
+            messages=[
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": build_prompt(obs)}
+            ],
             max_tokens=64,
             temperature=0.1,
             response_format={"type": "json_object"},
