@@ -40,6 +40,9 @@ Thumbs.db
 outputs/
 .openenv_cache/
 
+# ── Local Context / Notes ────────────────────────────────────────────────────
+hydro_pulse_context.md
+
 # ── Logs ─────────────────────────────────────────────────────────────────────
 *.log
 logs/
